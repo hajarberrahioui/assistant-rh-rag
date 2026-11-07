@@ -45,3 +45,12 @@ quality_gates:
     error_rate: 0.0                # une évaluation avec erreurs techniques n'est pas valable
     latency_p95_ms: 12000          # baseline 8106 ms ; +50 % de marge (latence de l'API variable)
     tokens_mean: 2000              # baseline 1198 ; garde-fou sur le coût par requête
+
+monitoring:
+  log_path: logs/requetes.jsonl            # une ligne JSON par requête (non versionné : données d'usage)
+  report_path: logs/rapport_monitoring.json
+  log_questions: false                     # par défaut, le texte des questions n'est PAS journalisé (vie privée)
+
+auth:
+  users_path: config/users.yaml            # comptes (mots de passe hachés) : NON versionné
+  max_attempts: 5                          # tentatives de connexion avant blocage de la session

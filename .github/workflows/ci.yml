@@ -19,7 +19,7 @@ jobs:
       - name: Installer les dépendances
         run: pip install -r requirements-ci.txt
       - name: Lint (ruff)
-        run: ruff check src tests
+        run: ruff check src tests app.py
       - name: Tests unitaires et de configuration (pytest)
         run: pytest -v
 
