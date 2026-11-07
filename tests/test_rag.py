@@ -6,6 +6,8 @@ import pytest
 
 from rag import REFUSAL, SYSTEM_PROMPT, RAGAssistant
 
+ROLES = {"employe": ["public"], "rh": ["public", "rh"]}
+
 
 class FakeEmbedder:
     def encode(self, texts, normalize_embeddings=True):
@@ -39,7 +41,7 @@ class FakeLLM:
 def make_assistant(distances, llm_text="Vous avez 22 jours [DOC-0, Section 0]."):
     a = RAGAssistant.__new__(RAGAssistant)          # sans __init__ : rien n'est chargé
     a.params = {"top_k": len(distances), "min_similarity": 0.80, "llm_model": "test",
-                "temperature": 0.0, "max_tokens": 100}
+                "temperature": 0.0, "max_tokens": 100, "roles": ROLES}
     a.embedder, a.collection, a.llm = FakeEmbedder(), FakeCollection(distances), FakeLLM(llm_text)
     return a
 
@@ -77,3 +79,47 @@ def test_metadata_filter_is_passed_to_the_vector_store():
     a = make_assistant([0.10])
     a.retrieve("question", where={"niveau_acces": "public"})
     assert a.collection.last_where == {"niveau_acces": "public"}
+
+
+# ---------- Contrôle d'accès (P2) ----------
+
+class FilteringCollection:
+    """Fausse base qui applique vraiment le filtre $in sur niveau_acces, comme Chroma."""
+    DOCS = [("RI-001-0002", "Horaires : 8h30-9h30.", "public"),
+            ("SAL-001-0002", "Grille confidentielle : développeur junior 9 000 à 13 000 MAD.", "rh")]
+
+    def query(self, query_embeddings, n_results, where=None):
+        allowed = where["niveau_acces"]["$in"] if where else ["public", "rh"]
+        docs = [d for d in self.DOCS if d[2] in allowed][:n_results]
+        metas = [{"doc_id": cid[:7], "section": "s", "page": -1, "version": "1", "statut": "en_vigueur",
+                  "niveau_acces": level, "source": "x.md"} for cid, _, level in docs]
+        return {"ids": [[d[0] for d in docs]], "documents": [[d[1] for d in docs]],
+                "distances": [[0.1] * len(docs)], "metadatas": [metas]}
+
+
+def test_each_role_gets_its_own_filter():
+    a = make_assistant([0.1])
+    assert a.access_filter("employe") == {"niveau_acces": {"$in": ["public"]}}
+    assert a.access_filter("rh") == {"niveau_acces": {"$in": ["public", "rh"]}}
+
+
+def test_unknown_role_is_rejected():
+    a = make_assistant([0.1])
+    with pytest.raises(ValueError):
+        a.access_filter("directeur")
+
+
+def test_confidential_passage_never_reaches_the_llm_for_an_employee():
+    a = make_assistant([0.1, 0.1])                                # top_k = 2
+    a.collection = FilteringCollection()
+    r = a.answer("Quel est le salaire d'un développeur junior ?", role="employe")
+    prompt = a.llm.calls[0]["messages"][1]["content"]
+    assert "9 000" not in prompt                                  # le texte confidentiel n'est pas envoyé
+    assert {s["niveau_acces"] for s in r["sources"]} == {"public"}
+
+
+def test_hr_can_access_confidential_documents():
+    a = make_assistant([0.1, 0.1])
+    a.collection = FilteringCollection()
+    a.answer("Quel est le salaire d'un développeur junior ?", role="rh")
+    assert "9 000" in a.llm.calls[0]["messages"][1]["content"]

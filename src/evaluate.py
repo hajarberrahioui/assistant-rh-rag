@@ -20,11 +20,11 @@ from rag import RAGAssistant
 from scoring import check_answer, cites_expected_doc, compute_metrics, eval_fingerprint, retrieval_rank
 
 
-def answer_with_retry(assistant, question, retries=3):
+def answer_with_retry(assistant, question, role, retries=3):
     """Réessaie en cas de limite de débit ou de coupure réseau (erreurs temporaires)."""
     for attempt in range(retries):
         try:
-            return assistant.answer(question)
+            return assistant.answer(question, role=role)
         except (RateLimitError, APIConnectionError, APITimeoutError) as e:
             wait = 20 * (attempt + 1)
             print(f"   {type(e).__name__} : nouvelle tentative dans {wait} s")
@@ -38,13 +38,13 @@ def evaluate(assistant, questions, retrieval_only, pause_s):
     rows = []
     for q in questions:
         print(f"{q['id']} {q['question'][:70]}")
-        row = {"id": q["id"], "categorie": q["categorie"], "question": q["question"]}
+        row = {"id": q["id"], "categorie": q["categorie"], "role": q.get("role", "employe"), "question": q["question"]}
         try:
             if retrieval_only:
-                sources = assistant.retrieve(q["question"])
+                sources = assistant.retrieve(q["question"], where=assistant.access_filter(q.get("role", "employe")))
                 row.update(answer="", refused=None, latency_ms=None, prompt_tokens=0, completion_tokens=0)
             else:
-                r = answer_with_retry(assistant, q["question"])
+                r = answer_with_retry(assistant, q["question"], q.get("role", "employe"))
                 sources = r["sources"]
                 row.update(answer=r["answer"], refused=r["refused"], refusal_reason=r.get("refusal_reason"),
                            latency_ms=r["latency_ms"], prompt_tokens=r["prompt_tokens"],
@@ -54,7 +54,7 @@ def evaluate(assistant, questions, retrieval_only, pause_s):
         except Exception as e:                       # une erreur ne doit pas arrêter toute l'évaluation
             print(f"   ERREUR : {e}")
             row["error"], row["answer"] = True, f"ERREUR : {e}"
-            sources = assistant.retrieve(q["question"])   # le retrieval reste évaluable (il est local)
+            sources = assistant.retrieve(q["question"], where=assistant.access_filter(q.get("role", "employe")))
 
         row["best_similarity"] = sources[0]["similarity"] if sources else None
         row["retrieved"] = " ; ".join(f"{s['chunk_id']}({s['similarity']:.3f})" for s in sources)
