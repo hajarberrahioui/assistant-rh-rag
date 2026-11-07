@@ -6,11 +6,8 @@ import os
 import sys
 import time
 
-import chromadb
 import yaml
 from dotenv import load_dotenv
-from groq import Groq
-from sentence_transformers import SentenceTransformer
 
 REFUSAL = ("Je ne dispose pas de cette information dans les documents RH. "
            "Merci de contacter le service RH (rh@techmaroc.example, poste 2200).")
@@ -36,6 +33,12 @@ def load_params(path="params.yaml"):
 
 class RAGAssistant:
     def __init__(self):
+        # Imports lourds ici : les tests unitaires remplacent ces composants par des faux
+        # et n'ont donc pas besoin d'installer chromadb, torch ou groq.
+        import chromadb
+        from groq import Groq
+        from sentence_transformers import SentenceTransformer
+
         load_dotenv()  # lit GROQ_API_KEY dans le fichier .env
         self.index_params, self.params = load_params()
         self.embedder = SentenceTransformer(self.index_params["embedding_model"])

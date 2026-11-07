@@ -8,7 +8,6 @@ import json
 import re
 from pathlib import Path
 
-import pymupdf
 import yaml
 
 # Métadonnées des PDF (un PDF n'a pas de front matter, on les déclare ici).
@@ -44,6 +43,7 @@ def read_markdown(path: Path):
 
 def read_pdf(path: Path):
     """Renvoie la liste des (numéro de page, texte) du PDF."""
+    import pymupdf  # importé ici : les tests qui n'utilisent pas de PDF n'en ont pas besoin
     with pymupdf.open(path) as doc:
         return [(i + 1, page.get_text()) for i, page in enumerate(doc)]
 

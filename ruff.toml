@@ -1,0 +1,7 @@
+line-length = 120
+
+[lint]
+select = ["E", "F", "W", "I"]   # erreurs de style, erreurs logiques (variables inutilisées...), ordre des imports
+
+[lint.per-file-ignores]
+"src/rag.py" = ["E501"]   # le prompt système est volontairement gardé tel quel (une règle par ligne)
