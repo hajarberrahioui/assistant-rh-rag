@@ -1,0 +1,20 @@
+stages:
+  ingest:
+    cmd: python src/ingest.py
+    deps:
+      - src/ingest.py
+      - data/raw
+    params:
+      - ingest
+    outs:
+      - data/processed/chunks.jsonl
+
+  index:
+    cmd: python src/index.py
+    deps:
+      - src/index.py
+      - data/processed/chunks.jsonl
+    params:
+      - index
+    outs:
+      - data/index

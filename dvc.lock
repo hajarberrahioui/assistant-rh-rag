@@ -1,0 +1,51 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python src/ingest.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: c30db53420437ec0b2c029096736ad41.dir
+      size: 1542716
+      nfiles: 11
+    - path: src/ingest.py
+      hash: md5
+      md5: 2ec131bd3b1dc883aa61727c0d9493fb
+      size: 7740
+    params:
+      params.yaml:
+        ingest:
+          raw_dir: data/raw
+          output_path: data/processed/chunks.jsonl
+          chunk_size: 800
+          chunk_overlap: 100
+    outs:
+    - path: data/processed/chunks.jsonl
+      hash: md5
+      md5: 36b70e840a8bead20d5701bada8200e4
+      size: 682053
+  index:
+    cmd: python src/index.py
+    deps:
+    - path: data/processed/chunks.jsonl
+      hash: md5
+      md5: 36b70e840a8bead20d5701bada8200e4
+      size: 682053
+    - path: src/index.py
+      hash: md5
+      md5: 0e052100470241d9bbbc06ea014246b1
+      size: 2678
+    params:
+      params.yaml:
+        index:
+          chunks_path: data/processed/chunks.jsonl
+          index_dir: data/index
+          collection: rh_docs
+          embedding_model: intfloat/multilingual-e5-small
+          batch_size: 64
+    outs:
+    - path: data/index
+      hash: md5
+      md5: f9208237ec2aebfb5243b435f05e17a1.dir
+      size: 7499940
+      nfiles: 5
