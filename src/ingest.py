@@ -57,6 +57,31 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
+# ---------- 2 bis. Contrôle de sécurité : instructions cachées ----------
+
+# Formulations typiques d'une prompt injection : un texte qui s'adresse à l'IA pour changer son comportement.
+# Contrôle volontairement simple (mots-clés) : il bloque les cas grossiers, pas une attaque élaborée.
+INJECTION_PATTERNS = [
+    r"ignore[rsz]?\s+(toutes\s+)?(tes|vos|les|ces)\s+(instructions|consignes|r[eè]gles)",
+    r"ignore\s+(all\s+|any\s+)?(previous|prior|above)\s+instructions",
+    r"(note|message|instructions?|consignes?)\s+(pour|à|a)\s+l['’]?\s*"
+    r"(assistant|ia\b|intelligence artificielle|chatbot|agent)",
+    r"d[ée]sormais,?\s+r[ée]ponds",
+    r"tu\s+es\s+(maintenant|d[ée]sormais)",
+    r"(prompt\s+syst[eè]me|system\s+prompt)",
+]
+
+
+def find_injection(text: str):
+    """Renvoie le passage suspect si le texte contient une instruction adressée à l'IA, sinon None."""
+    for pattern in INJECTION_PATTERNS:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            start = max(match.start() - 40, 0)
+            return text[start:match.end() + 40].replace("\n", " ")
+    return None
+
+
 # ---------- 3. Découpage ----------
 
 def split_markdown_sections(body: str):
@@ -147,18 +172,28 @@ def split_text(text: str, chunk_size: int, overlap: int):
 # ---------- 4. Pipeline ----------
 
 def build_chunks(raw_dir: Path, chunk_size: int, overlap: int):
-    all_chunks = []
+    """Renvoie (chunks, quarantaine). Un document contenant une instruction suspecte n'est pas indexé."""
+    all_chunks, quarantine = [], []
     for path in sorted(raw_dir.iterdir()):
         if path.suffix == ".md":
             meta, body = read_markdown(path)
+            suspect = find_injection(body)
+            if suspect:
+                quarantine.append({"source": path.name, "doc_id": meta["doc_id"], "extrait": suspect})
+                continue
             pieces = []
             for section, content in split_markdown_sections(body):
                 for text in split_text(clean_text(content), chunk_size, overlap):
                     pieces.append({"section": section, "page": None, "text": text})
         elif path.suffix == ".pdf":
             meta = PDF_METADATA[path.name]
+            pages = read_pdf(path)
+            suspect = find_injection(" ".join(text for _, text in pages))
+            if suspect:
+                quarantine.append({"source": path.name, "doc_id": meta["doc_id"], "extrait": suspect})
+                continue
             pieces = []
-            for article, page, content in split_pdf_articles(read_pdf(path)):
+            for article, page, content in split_pdf_articles(pages):
                 for text in split_text(content, chunk_size, overlap):
                     pieces.append({"section": article, "page": page, "text": text})
         else:
@@ -176,12 +211,12 @@ def build_chunks(raw_dir: Path, chunk_size: int, overlap: int):
                 "section": piece["section"],
                 **{k: str(meta[k]) for k in ("doc_id", "titre", "type", "version", "date", "niveau_acces", "statut")},
             })
-    return all_chunks
+    return all_chunks, quarantine
 
 
 def main():
     params = load_params()
-    chunks = build_chunks(Path(params["raw_dir"]), params["chunk_size"], params["chunk_overlap"])
+    chunks, quarantine = build_chunks(Path(params["raw_dir"]), params["chunk_size"], params["chunk_overlap"])
     output = Path(params["output_path"])
     output.parent.mkdir(parents=True, exist_ok=True)
     with open(output, "w", encoding="utf-8") as f:
@@ -192,6 +227,13 @@ def main():
     print(f"{len(chunks)} chunks créés à partir de {len(docs)} documents -> {output}")
     for d in docs:
         print(f"  {d}: {sum(c['doc_id'] == d for c in chunks)} chunks")
+
+    # Rapport de quarantaine : versionné dans Git, relu par un humain (gouvernance du corpus)
+    report = Path(params["quarantine_path"])
+    report.write_text(json.dumps(quarantine, indent=2, ensure_ascii=False), encoding="utf-8")
+    for q in quarantine:
+        print(f"\n⚠️  QUARANTAINE : {q['source']} ({q['doc_id']}) non indexé, instruction suspecte :")
+        print(f"    « {q['extrait']} »")
 
 
 if __name__ == "__main__":

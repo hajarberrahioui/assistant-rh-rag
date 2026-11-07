@@ -8,6 +8,8 @@ stages:
       - ingest
     outs:
       - data/processed/chunks.jsonl
+      - data/processed/quarantaine.json:
+          cache: false        # petit rapport lisible : suivi par Git, pas par le cache DVC
 
   index:
     cmd: python src/index.py

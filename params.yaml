@@ -1,6 +1,7 @@
 ingest:
   raw_dir: data/raw
   output_path: data/processed/chunks.jsonl
+  quarantine_path: data/processed/quarantaine.json   # documents écartés (instructions suspectes)
   chunk_size: 500      # taille max d'un chunk, en caractères
   chunk_overlap: 50    # caractères repris du chunk précédent
 

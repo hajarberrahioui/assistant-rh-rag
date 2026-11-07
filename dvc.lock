@@ -10,31 +10,36 @@ stages:
       nfiles: 11
     - path: src/ingest.py
       hash: md5
-      md5: 2ec131bd3b1dc883aa61727c0d9493fb
-      size: 7740
+      md5: 57256abeacbcba167236f55ed9d115f6
+      size: 9771
     params:
       params.yaml:
         ingest:
           raw_dir: data/raw
           output_path: data/processed/chunks.jsonl
+          quarantine_path: data/processed/quarantaine.json
           chunk_size: 500
           chunk_overlap: 50
     outs:
     - path: data/processed/chunks.jsonl
       hash: md5
-      md5: 321b5896d3a4e4175fcfe3e0cfcd00b0
-      size: 791848
+      md5: 937e008f77b7d57348e3bb5c82aa4668
+      size: 789059
+    - path: data/processed/quarantaine.json
+      hash: md5
+      md5: ef697f20f8431d85ee2d3b3d21754148
+      size: 211
   index:
     cmd: python src/index.py
     deps:
     - path: data/processed/chunks.jsonl
       hash: md5
-      md5: 321b5896d3a4e4175fcfe3e0cfcd00b0
-      size: 791848
+      md5: 937e008f77b7d57348e3bb5c82aa4668
+      size: 789059
     - path: src/index.py
       hash: md5
-      md5: 0e052100470241d9bbbc06ea014246b1
-      size: 2678
+      md5: 69deb73f360e4a5d53b98eaf5bde5b8b
+      size: 2605
     params:
       params.yaml:
         index:
@@ -46,6 +51,6 @@ stages:
     outs:
     - path: data/index
       hash: md5
-      md5: 0472f0505959d8ba44ec6756e35e512d.dir
-      size: 9769208
+      md5: 04465e30b1d07de9e28a103e9bffdf24.dir
+      size: 9785592
       nfiles: 6
