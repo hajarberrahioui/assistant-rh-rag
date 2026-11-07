@@ -17,20 +17,20 @@ stages:
         ingest:
           raw_dir: data/raw
           output_path: data/processed/chunks.jsonl
-          chunk_size: 800
-          chunk_overlap: 100
+          chunk_size: 500
+          chunk_overlap: 50
     outs:
     - path: data/processed/chunks.jsonl
       hash: md5
-      md5: 36b70e840a8bead20d5701bada8200e4
-      size: 682053
+      md5: 321b5896d3a4e4175fcfe3e0cfcd00b0
+      size: 791848
   index:
     cmd: python src/index.py
     deps:
     - path: data/processed/chunks.jsonl
       hash: md5
-      md5: 36b70e840a8bead20d5701bada8200e4
-      size: 682053
+      md5: 321b5896d3a4e4175fcfe3e0cfcd00b0
+      size: 791848
     - path: src/index.py
       hash: md5
       md5: 0e052100470241d9bbbc06ea014246b1
@@ -46,6 +46,6 @@ stages:
     outs:
     - path: data/index
       hash: md5
-      md5: f9208237ec2aebfb5243b435f05e17a1.dir
-      size: 7499940
-      nfiles: 5
+      md5: 0472f0505959d8ba44ec6756e35e512d.dir
+      size: 9769208
+      nfiles: 6

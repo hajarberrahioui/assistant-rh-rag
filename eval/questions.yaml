@@ -237,7 +237,7 @@
   expected_doc_ids: [CONG-002]
   reponse_attendue: "Question ambiguë (congés ? télétravail ? congés exceptionnels ?). Bon comportement : demander une précision ou répondre en précisant l'interprétation retenue. Évaluation manuelle."
 
-  - id: Q33
+- id: Q33
   categorie: normale
   question: "Ma femme va accoucher, j'ai droit à combien de jours de congé ?"
   expected_doc_ids: [CONG-002]
@@ -258,5 +258,5 @@
   question: "Pendant combien de temps serai-je accompagné par un parrain ou une marraine après mon arrivée dans l'entreprise ?"
   expected_doc_ids: [ONB-001]
   expected_sections: ["3. Le parrainage"]
-  must_contain: ["3 mois|trois mois"]
+  must_contain: ["3 premiers mois|3 mois|trois premiers mois|trois mois"]
   reponse_attendue: "Chaque nouveau salarié bénéficie d'un accompagnement par un parrain ou une marraine pendant ses 3 premiers mois."

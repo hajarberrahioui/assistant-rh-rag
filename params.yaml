@@ -1,8 +1,8 @@
 ingest:
   raw_dir: data/raw
   output_path: data/processed/chunks.jsonl
-  chunk_size: 800      # taille max d'un chunk, en caractères
-  chunk_overlap: 100   # caractères repris du chunk précédent
+  chunk_size: 500
+  chunk_overlap: 50   # caractères repris du chunk précédent
 
 index:
   chunks_path: data/processed/chunks.jsonl
@@ -13,7 +13,13 @@ index:
 
 rag:
   top_k: 5                 # nombre de chunks récupérés
-  min_similarity: 0.75     # en dessous : refus sans appeler le LLM (à calibrer à l'étape 6)
-  llm_model: openai/gpt-oss-20b # mettre le modèle Groq utilisé dans ton TP3
+  min_similarity: 0.80     # en dessous : refus sans appeler le LLM (à calibrer à l'étape 6)
+  llm_model: openai/gpt-oss-20b
   temperature: 0.0         # 0 = réponses les plus déterministes possible
   max_tokens: 1500
+
+evaluate:
+  questions_path: eval/questions.yaml
+  results_dir: eval/results
+  experiment_name: assistant-rh-rag
+  pause_s: 2.0          # pause entre deux questions (limites de débit de l'API Groq)

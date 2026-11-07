@@ -3,3 +3,4 @@ groq==1.7.0
 pymupdf==2.1
 sentence-transformers==6.2.0
 dvc==3.67.1
+mlflow==3.18.0
