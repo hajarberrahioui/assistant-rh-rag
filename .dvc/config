@@ -1,0 +1,4 @@
+[core]
+    remote = localstore
+['remote "localstore"']
+    url = C:\Users\hp\Desktop\ISDIA5\MLOPS\dvc-store\assistant-rh-rag
