@@ -108,9 +108,8 @@ pip install -r requirements.txt
 GROQ_API_KEY=votre_cle
 ```
 
-**Données :** récupérer le corpus versionné puis reconstruire chunks et index :
+**Données :** le corpus (`data/raw/`, ~3 Mo) est versionné dans Git. Reconstruire les chunks et l'index :
 ```powershell
-dvc pull          # récupère data/raw depuis le stockage DVC
 dvc repro         # ingestion puis indexation (environ 3 minutes)
 ```
 
@@ -166,7 +165,7 @@ Analyse complète : [`docs/risques.md`](docs/risques.md).
 |---|---|
 | Versions des bibliothèques | `requirements.txt` |
 | Paramètres du système | `params.yaml` |
-| Version des données, chunks et index | `dvc.lock` (+ stockage DVC) |
+| Version du corpus | Git (data/raw/) ; chunks et index : dvc.lock |
 | Étapes de construction | `dvc.yaml` |
 | Résultats et leur contexte | MLflow (paramètres, métriques, commit, `dvc.lock`) et `eval/results/` |
 
