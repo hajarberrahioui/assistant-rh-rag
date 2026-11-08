@@ -122,7 +122,7 @@ python src/auth.py add salma rh
 ---
 
 ## Utilisation
-
+Pour les tests et le lint : `pip install -r requirements-ci.txt`
 | Objectif | Commande |
 |---|---|
 | Interface web | `streamlit run app.py` puis http://localhost:8501 |

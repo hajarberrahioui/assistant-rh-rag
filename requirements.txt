@@ -1,7 +1,10 @@
 chromadb==1.5.9
-groq==1.7.0
-pymupdf==2.1
-sentence-transformers==6.2.0
 dvc==3.67.1
+groq==1.7.0
 mlflow==3.18.0
-streamlit== 1.67.0
+numpy==2.5.4
+pymupdf==2.1
+python-dotenv==1.2.4
+pyyaml==6.0.3
+sentence-transformers==6.2.0
+streamlit==1.67.0
