@@ -1,0 +1,7 @@
+# Modèle du fichier des comptes. Le vrai fichier (config/users.yaml) n'est pas versionné.
+# Il se crée avec : python src/auth.py add <identifiant> <role>
+users:
+  exemple:
+    role: employe
+    salt: "<sel aléatoire, généré automatiquement>"
+    hash: "<hachage PBKDF2 du mot de passe, généré automatiquement>"

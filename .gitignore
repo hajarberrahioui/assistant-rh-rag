@@ -5,3 +5,5 @@ __pycache__/
 .ipynb_checkpoints/
 mlflow.db
 mlruns/
+logs/
+config/users.yaml

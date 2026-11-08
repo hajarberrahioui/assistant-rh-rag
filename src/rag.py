@@ -1,9 +1,11 @@
 """Pipeline RAG : question -> retrieval (Chroma) -> prompt -> génération (Groq) -> réponse + sources.
 
-Usage : python src/rag.py "Combien de jours de congé ai-je par an ?"
+Usage :
+  python src/rag.py "Combien de jours de congé ai-je par an ?"            (rôle par défaut : employe)
+  python src/rag.py --role rh "Quel est le salaire d'un développeur junior ?"
 """
+import argparse
 import os
-import sys
 import time
 
 import yaml
@@ -46,6 +48,17 @@ class RAGAssistant:
         self.collection = client.get_collection(self.index_params["collection"])
         self.llm = Groq(api_key=os.environ["GROQ_API_KEY"])
 
+    # ---------- Contrôle d'accès (P2) ----------
+    def access_filter(self, role):
+        """Filtre Chroma correspondant aux niveaux d'accès autorisés pour ce rôle.
+
+        Le filtre est appliqué PENDANT la recherche : un chunk non autorisé n'est jamais récupéré,
+        donc il ne peut jamais entrer dans le contexte envoyé au LLM."""
+        roles = self.params["roles"]
+        if role not in roles:
+            raise ValueError(f"Rôle inconnu : {role!r} (rôles possibles : {', '.join(roles)})")
+        return {"niveau_acces": {"$in": roles[role]}}
+
     # ---------- Retrieval ----------
     def retrieve(self, question, top_k=None, where=None):
         """Renvoie les top_k chunks les plus proches de la question, avec leur similarité."""
@@ -53,7 +66,7 @@ class RAGAssistant:
         res = self.collection.query(
             query_embeddings=query_emb.tolist(),
             n_results=top_k or self.params["top_k"],
-            where=where,   # filtre sur les métadonnées (servira au contrôle d'accès P2)
+            where=where,   # filtre sur les métadonnées (contrôle d'accès)
         )
         return [
             {"chunk_id": cid, "text": doc, "similarity": round(1 - dist, 4), **meta}
@@ -71,11 +84,11 @@ class RAGAssistant:
         return "\n\n---\n\n".join(blocks)
 
     # ---------- Pipeline complet ----------
-    def answer(self, question, where=None):
+    def answer(self, question, role="employe"):
         start = time.time()
-        chunks = self.retrieve(question, where=where)
+        chunks = self.retrieve(question, where=self.access_filter(role))
         best = chunks[0]["similarity"] if chunks else 0.0
-        result = {"question": question, "sources": chunks, "best_similarity": best,
+        result = {"question": question, "role": role, "sources": chunks, "best_similarity": best,
                   "refused": False, "prompt_tokens": 0, "completion_tokens": 0}
 
         # Garde-fou : si même le meilleur chunk est peu similaire, on refuse sans appeler le LLM.
@@ -104,12 +117,18 @@ class RAGAssistant:
 
 
 if __name__ == "__main__":
-    question = " ".join(sys.argv[1:]) or "Combien de jours de congé ai-je par an ?"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("question", nargs="+")
+    parser.add_argument("--role", default="employe", help="rôle de la personne qui pose la question")
+    args = parser.parse_args()
+    question = " ".join(args.question)
+
     assistant = RAGAssistant()
-    r = assistant.answer(question)
-    print(f"\nQUESTION : {question}\n\nRÉPONSE :\n{r['answer']}\n")
+    r = assistant.answer(question, role=args.role)
+    print(f"\nQUESTION ({r['role']}) : {question}\n\nRÉPONSE :\n{r['answer']}\n")
     print("SOURCES RÉCUPÉRÉES :")
     for s in r["sources"]:
-        print(f"  {s['similarity']:.3f}  {s['chunk_id']:<16} {s['statut']:<11} {s['section'] or s['page']}")
+        print(f"  {s['similarity']:.3f}  {s['chunk_id']:<16} {s['niveau_acces']:<7} {s['statut']:<11} "
+              f"{s['section'] or s['page']}")
     print(f"\nlatence : {r['latency_ms']} ms | tokens : {r['prompt_tokens']} + {r['completion_tokens']} "
           f"| refus : {r['refused']} ({r.get('refusal_reason')})")

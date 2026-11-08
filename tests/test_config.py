@@ -6,7 +6,7 @@ import yaml
 from conftest import ROOT
 
 CATEGORIES = {"normale", "hors_perimetre", "piege_obsolete", "piege_injection",
-              "acces_restreint", "cas_individuel", "ambigue"}
+              "acces_restreint", "acces_autorise", "cas_individuel", "ambigue"}
 
 
 @pytest.fixture(scope="module")
@@ -44,8 +44,9 @@ def test_question_ids_are_unique(questions):
     assert len(ids) == len(set(ids))
 
 
-def test_questions_are_well_formed(questions, known_doc_ids):
+def test_questions_are_well_formed(questions, known_doc_ids, params):
     for q in questions:
+        assert q.get("role", "employe") in params["rag"]["roles"], f"{q['id']} : rôle inconnu"
         assert q["categorie"] in CATEGORIES, q["id"]
         assert q["question"].strip(), q["id"]
         assert set(q["expected_doc_ids"]) <= known_doc_ids, f"{q['id']} : document inconnu"
@@ -55,4 +56,5 @@ def test_questions_are_well_formed(questions, known_doc_ids):
 
 
 def test_every_category_is_represented(questions):
-    assert {"normale", "hors_perimetre", "piege_obsolete", "piege_injection"} <= {q["categorie"] for q in questions}
+    expected = {"normale", "hors_perimetre", "piege_obsolete", "piege_injection", "acces_restreint", "acces_autorise"}
+    assert expected <= {q["categorie"] for q in questions}
