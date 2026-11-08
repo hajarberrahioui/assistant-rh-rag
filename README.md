@@ -108,9 +108,9 @@ pip install -r requirements.txt
 GROQ_API_KEY=votre_cle
 ```
 
-**Données :** le corpus (`data/raw/`, ~3 Mo) est versionné dans Git. Reconstruire les chunks et l'index :
+**Données :** le corpus (`data/raw/`, ~3 Mo, documents publics ou fictifs) est versionné dans Git. Reconstruire les chunks et l'index avec le pipeline DVC :
 ```powershell
-dvc repro         # ingestion puis indexation (environ 3 minutes)
+dvc repro         # ingestion puis indexation (environ 3 minutes, téléchargement du modèle au 1er lancement)
 ```
 
 **Comptes de démonstration :**
@@ -138,7 +138,7 @@ python src/auth.py add salma rh
 
 ## Chaîne MLOps
 
-1. **Versionnement** : code dans Git ; corpus, chunks et index dans DVC ; paramètres dans `params.yaml`.
+1. **Versionnement** : code et corpus brut (petit volume) dans Git ; chunks et index gérés par le pipeline DVC ; paramètres dans `params.yaml`.
 2. **Pipeline reproductible** : `dvc repro` ne relance que les étapes dont le code, les données ou les paramètres ont changé.
 3. **Expériences** : chaque évaluation est enregistrée dans MLflow avec ses paramètres, ses métriques, le commit Git et `dvc.lock`.
 4. **Évaluation** : 39 questions annotées ; Recall@5, MRR, exactitude, refus, citations, latence, tokens.
@@ -165,14 +165,14 @@ Analyse complète : [`docs/risques.md`](docs/risques.md).
 |---|---|
 | Versions des bibliothèques | `requirements.txt` |
 | Paramètres du système | `params.yaml` |
-| Version du corpus | Git (data/raw/) ; chunks et index : dvc.lock |
+| Version du corpus | Git (`data/raw/`) |
+| Version des chunks et de l'index | `dvc.lock` |
 | Étapes de construction | `dvc.yaml` |
 | Résultats et leur contexte | MLflow (paramètres, métriques, commit, `dvc.lock`) et `eval/results/` |
 
 Reconstruire un résultat à partir d'un commit :
 ```powershell
 git checkout <commit>
-dvc checkout
 dvc repro
 python src/evaluate.py --run-name reproduction
 python src/quality_gate.py
@@ -189,6 +189,7 @@ Le LLM n'est pas parfaitement déterministe malgré `temperature` = 0 : les mét
 - Filtre anti-injection par mots-clés : contournable par une injection reformulée.
 - Deux rôles seulement ; comptes locaux de démonstration (en production : SSO de l'entreprise).
 - Recherche parfois mise en défaut par un vocabulaire différent ou des articles de loi très proches.
+- Chroma modifie ses fichiers internes à chaque ouverture : après utilisation, `dvc status` peut signaler `data/index` comme modifié ; `dvc checkout data/index --force` restaure la version de référence.
 
 ---
 

@@ -10,7 +10,7 @@
 | FRAIS-001 | procedure_notes_de_frais.md | Markdown | procedure | 2.1 | 2025-11-15 | public | en_vigueur | Fictive | Notes de frais |
 | ONB-001 | guide_onboarding.md | Markdown | guide | 1.4 | 2026-02-01 | public | en_vigueur | Fictive | Intégration |
 | FAQ-001 | faq_rh.md | FAQ (Markdown Q/R) | faq | 2.0 | 2026-03-01 | public | en_vigueur | Fictive | Questions courantes |
-| NOTE-014 | note_cafeteria.md | Markdown | note | 1.0 | 2026-10-05 | public | en_vigueur | Fictive | **Piège** : prompt injection |
+| NOTE-014 | note_cafeteria.md | Markdown | note | 1.0 | 2026-10-05 | public | en_vigueur | Fictive | **Piège** : prompt injection — **en quarantaine, non indexé** (voir `data/processed/quarantaine.json`) |
 | SAL-001 | grille_salariale.md | Markdown | grille | 2026 | 2026-01-01 | **rh** | en_vigueur | Fictive | Réservé (P2) |
 | DISC-001 | procedure_disciplinaire.md | Markdown | procedure | 1.1 | 2025-06-01 | **rh** | en_vigueur | Fictive | Réservé (P2) |
 
@@ -25,6 +25,9 @@
 | Congé sans solde | non prévu | jusqu'à 3 mois après 2 ans d'ancienneté |
 
 Comportement attendu : l'assistant s'appuie sur la **v2** et, si la v1 est récupérée, signale qu'elle est obsolète.
+
+## Quarantaine
+À l'ingestion, tout document contenant une instruction adressée à l'IA est écarté et listé dans `data/processed/quarantaine.json` pour relecture humaine. Actuellement : NOTE-014.
 
 ## Limites connues
 - La traduction française du Code du travail date de 2011 ; certains articles ont pu être modifiés depuis.
