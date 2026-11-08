@@ -14,7 +14,7 @@ index:
 
 rag:
   top_k: 5                 # nombre de chunks récupérés
-  min_similarity: 0.80     # en dessous : refus sans appeler le LLM (à calibrer à l'étape 6)
+  min_similarity: 0.80     # en dessous : refus sans appeler le LLM # en dessous : refus sans appeler le LLM (calibré sur l'évaluation, étape 6)
   llm_model: openai/gpt-oss-20b
   temperature: 0.0         # 0 = réponses les plus déterministes possible
   max_tokens: 1500
