@@ -1,0 +1,5 @@
+# Mêmes fins de ligne (LF) sur toutes les machines : les empreintes DVC des fichiers texte
+# (code, corpus Markdown) sont alors identiques sous Windows et sous Linux.
+* text=auto eol=lf
+*.pdf binary
+*.png binary

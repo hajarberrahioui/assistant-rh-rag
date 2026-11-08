@@ -69,3 +69,18 @@ def test_fingerprint_ignores_line_endings_but_not_parameters(tmp_path):
     (tmp_path / "params.yaml").write_text(files["params.yaml"], encoding="utf-8")
     (tmp_path / "rag.py").write_text("PROMPT = 'autres regles'\n", encoding="utf-8")
     assert fp() != reference                                   # code / prompt modifié : empreinte différente
+
+
+def test_fingerprint_ignores_the_rebuilt_chroma_index(tmp_path):
+    """Un index reconstruit (fichiers Chroma différents, même contenu) ne doit pas périmer l'évaluation."""
+    (tmp_path / "params.yaml").write_text("ingest: {a: 1}\nindex: {b: 2}\nrag: {c: 3}\n", encoding="utf-8")
+    (tmp_path / "q.yaml").write_text("- id: Q01\n", encoding="utf-8")
+    (tmp_path / "rag.py").write_text("X = 1\n", encoding="utf-8")
+    lock = "stages:\n  ingest:\n    outs:\n    - md5: chunks\n  index:\n    outs:\n    - md5: {}\n"
+
+    def fp(index_md5):
+        (tmp_path / "dvc.lock").write_text(lock.format(index_md5), encoding="utf-8")
+        return eval_fingerprint(tmp_path / "params.yaml", tmp_path / "q.yaml", tmp_path / "dvc.lock",
+                                tmp_path / "rag.py")
+
+    assert fp("index-machine-A") == fp("index-machine-B")

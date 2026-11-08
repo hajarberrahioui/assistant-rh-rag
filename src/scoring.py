@@ -78,7 +78,11 @@ def compute_metrics(rows, retrieval_only):
 def eval_fingerprint(params_path="params.yaml", questions_path="eval/questions.yaml", lock_path="dvc.lock",
                      code_path="src/rag.py"):
     """Empreinte de tout ce qui détermine un résultat d'évaluation : paramètres du système,
-    questions, versions des données (dvc.lock) et code du pipeline RAG (prompt compris).
+    questions, données (chunks produits par l'ingestion, d'après dvc.lock) et code du pipeline RAG.
+
+    L'index Chroma n'est volontairement PAS pris en compte : il est entièrement déterminé par les
+    chunks, les paramètres d'indexation et le modèle d'embeddings (déjà dans l'empreinte), mais ses
+    fichiers internes changent à chaque reconstruction (identifiants, dates), même à contenu identique.
     Les fichiers sont relus puis resérialisés : les fins de ligne Windows/Linux ne changent pas l'empreinte."""
     def load(path):
         with open(path, encoding="utf-8") as f:
@@ -89,7 +93,7 @@ def eval_fingerprint(params_path="params.yaml", questions_path="eval/questions.y
     content = {
         "params": {k: params[k] for k in ("ingest", "index", "rag")},
         "questions": load(questions_path),
-        "data": {stage: [o["md5"] for o in v.get("outs", [])] for stage, v in lock["stages"].items()},
+        "data": sorted(o["md5"] for o in lock["stages"]["ingest"].get("outs", [])),
         "code": open(code_path, encoding="utf-8").read().replace("\r\n", "\n"),
     }
     return hashlib.sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
